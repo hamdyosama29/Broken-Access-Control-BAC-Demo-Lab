@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureCorp - Learn BAC</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <a href="/" class="brand">SecureCorp Academy</a>
+        <div class="user-info">
+            <a href="/" class="btn">Back to Home</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header">
+            <h1>Understanding Broken Access Control (BAC)</h1>
+        </div>
+
+        <div class="learn-content">
+            <h2>What Happened?</h2>
+            <p>In the <strong>Vulnerable</strong> version, when you visited the dashboard, the page briefly showed a "Loading..." table before declaring "Access Denied". While the UI <em>looked</em> secure because no sensitive data was ever rendered on the screen, opening a proxy like <strong>Burp Suite</strong> reveals the truth: the frontend made a request to <code>GET /api/get-users/</code>, and the server actually responded with the full list of sensitive admin users.</p>
+
+            <h2>Why is it Vulnerable?</h2>
+            <p>The vulnerability exists because the application relied <em>solely</em> on <strong>Frontend Authorization</strong> to protect the data. The frontend logic correctly determined that the user (Role: USER) was not authorized to view the page, so it hid the table and ignored the API response. However, the backend API completely failed to verify the user's role before returning the data.</p>
+
+            <h2>Why hiding the UI is not security?</h2>
+            <p>Frontend code (HTML/JavaScript) executes in the user's browser, meaning it is fully under the user's control. An attacker doesn't need the frontend to display the data; they can simply intercept the API request in Burp Suite, or use a tool like <code>curl</code> to fetch the data directly. Hiding elements via CSS or JS is a UX (User Experience) feature, not a security boundary.</p>
+
+            <h2>Difference between Authorization Types</h2>
+            <ul>
+                <li><strong>Frontend Authorization:</strong> Good for UX. It helps hide buttons and navigation links that the user shouldn't click. (e.g., hiding the "Admin Settings" button).</li>
+                <li><strong>Server-side (API) Authorization:</strong> Mandatory for Security. The server must verify the identity and permissions of the user making the request <em>before</em> performing the action or returning any data.</li>
+            </ul>
+
+            <h2>Vulnerable Flow Diagram</h2>
+            <pre class="diagram">
+Browser
+ |
+ | GET /api/get-users/
+ v
+API Server
+ |
+ | (Missing Authorization Check!)
+ v
+Sensitive Data (JSON)
+ |
+ v
+Browser (Ignores the data, but the attacker already saw it in Burp Suite!)
+            </pre>
+
+            <h2>Fixed Flow Diagram</h2>
+            <p>In the <strong>Fixed</strong> version, the server verifies the user's role before querying the database or sending data.</p>
+            <pre class="diagram">
+Browser
+ |
+ | GET /api/get-users/
+ v
+API Server
+ |
+ | Check User Role == 'ADMIN'
+ | (Role is 'USER')
+ v
+403 Forbidden (No sensitive data sent)
+ |
+ v
+Browser (Receives 403, shows Access Denied safely)
+            </pre>
+
+            <h2>What should the server do? (Remediation)</h2>
+            <ul>
+                <li><strong>Always verify authorization on the backend.</strong> Do not trust the client.</li>
+                <li><strong>Implement Role-Based Access Control (RBAC)</strong> or Attribute-Based Access Control (ABAC) at the API level.</li>
+                <li><strong>Least Privilege:</strong> Only return the exact fields and records the user needs and is authorized to see.</li>
+                <li>Return proper HTTP status codes (like <code>401 Unauthorized</code> or <code>403 Forbidden</code>) when access is denied.</li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>
