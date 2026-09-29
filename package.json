@@ -1,0 +1,16 @@
+{
+  "name": "broken-access-control-lab",
+  "version": "1.0.0",
+  "description": "Educational Web Security Demo Lab simulating Broken Access Control",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cookie-parser": "^1.4.6"
+  },
+  "author": "Security Researcher",
+  "license": "MIT"
+}
